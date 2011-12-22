@@ -1,0 +1,112 @@
+%% This program is free software; you can redistribute it and/or
+%% modify it under the terms of the GNU General Public License
+%% as published by the Free Software Foundation; either version 2
+%% of the License, or (at your option) any later version.
+%%
+%% This program is distributed in the hope that it will be useful,
+%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%% GNU General Public License for more details.
+%%
+%% You should have received a copy of the GNU General Public License
+%% along with this program; if not, write to the Free Software
+%% Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+%%
+%% Author: Martin R. Ehmsen, ehmsen@imada.sdu.dk.
+%% Department of Mathematics and Computer Science,
+%% University of Southern Denmark, DK
+%%
+%% You can find an online copy of the GPL at
+%% http://www.gnu.org/copyleft/gpl.html .
+%% 
+%% Note: shell-escape needs to be activated for this to work.
+%% This can either be done by passing -shell-escape as an option to
+%% latex or by adding/changing "shell_escape = t" in your texmf.cnf .
+
+% 0.21 -> 0.3: Intermediate files are now stored with different filenames.
+% The return code of each Python shell execution is stored in an .rc file.
+% Any stderr output of a failed Python shell execution is inserted as
+% a red verbatim in the resulting document.
+%                                -- James Brotchie <brotchie@gmail.com>
+%
+% 0.2 -> 0.21: Moved \newwrite\@module from \@writemodule and out, since
+% no more than 15 \newwrites are allowed (and the previous version created a new
+% every time \@writemodule was called.
+
+\NeedsTeXFormat{LaTeX2e}[1994/12/01]
+\ProvidesPackage{python}[2011/12/22 v0.3 Python in LaTeX]
+\RequirePackage{etoolbox}
+\RequirePackage{verbatim}
+\RequirePackage{color}
+
+\newwrite\@out
+\newwrite\@module
+\newread\@retcode
+
+% Put the resulting Python code in separate files.
+\newcounter{@PythonEnvironmentCounter}
+\setcounter{@PythonEnvironmentCounter}{1}
+\newcommand{\@outname}{\jobname\arabic{@PythonEnvironmentCounter}}
+
+\begingroup \catcode `|=0 \catcode `[=1
+\catcode`]=2 \catcode `\{=12 \catcode `\}=12
+\catcode`\\=12 |gdef|@xpython#1\end{python}[|immediate|write|@out[#1]|end[python]]
+|endgroup
+
+\def\python{\kernel@ifnextchar [{\@python}{\@python[]}}
+
+\def\@python[#1]{%
+\gdef\@pythoninclude{#1}
+\immediate\openout\@out=\@outname.py
+\newlinechar='15
+\begingroup \catcode`\^^M=12 %
+\let\do\@makeother\dospecials\obeyspaces%
+\@xpython}
+
+\def\endpython{%
+\endgroup
+\immediate\closeout\@out
+\@writemodule
+\immediate\write18{cat \@pythoninclude\space\@outname.py | /usr/bin/env python > \@outname.py.out 2> \@outname.py.err; echo -n $? > \@outname.rc}
+\immediate\input\@outname.py.out
+
+% Read the return code of the executed Python script.
+\immediate\openin\@retcode=\@outname.rc
+\immediate\read\@retcode to \rc
+\immediate\closein\@retcode
+
+% If the return code isn't zero then include
+% the traceback.
+\ifnumequal{\rc}{0}{}{%
+    \begingroup
+        \color{red}
+        \verbatiminput{\@outname.py.err}
+    \endgroup
+}
+
+\immediate\stepcounter{@PythonEnvironmentCounter}
+}
+
+\def\@writemodule{%
+\immediate\openout\@module=latex.py
+\immediate\write\@module{jobname="\@outname"}
+\immediate\closeout\@module}
+
+% BUGS:
+%
+% \immediate\write18{cat \@pythoninclude\space\jobname.py | python > \jobname.py.out 2>\jobname.py.err}
+%
+% 1. Watch out for indentation done by aucTeX in Emacs
+%
+% 2. Let the package accept a "final version" option, such
+% that the output of each python run is saved such that it can be
+% inserted into the document by hand 
+% (conference, journals are not likely to compile with
+% shell_escape or have python).
+%
+% \gdef\@prepython{}
+% \def\prepython#1{%
+% \gdef\@prepython{#1}
+% }
+% sed -e 's/^  //g' cluster.py
+% \immediate\write18{\@prepython\space\jobname.py > \

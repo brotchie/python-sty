@@ -1,0 +1,47 @@
+\documentclass{article}
+
+\usepackage{python}
+\usepackage{amsmath}
+
+\title{Example Use of python.sty}
+\author{James Brotchie \emph{j.brotchie@gmail.com}}
+\begin{document}
+\maketitle
+
+$N \times N$ element identity matrices for $N \in \{1,2,\ldots,5\}$:
+
+\begin{python}
+def identity(n):
+    """
+    Generates and returns the LaTeX code for
+    a n x n identity matrix.
+
+    """
+    return '\n'.join([
+        r'\left[',
+        r'\begin{array}{%s}' % (n*'c',),
+        '\\\\'.join('&'.join('1' if i==j else '0' for j in range(n))
+                        for i in range(n)),
+        r'\end{array}',
+        r'\right]',
+    ])
+
+# Displays identity matrices for
+# n \in {1, 2, ..., 5}.
+print '\n'.join([
+    r'\begin{equation*}',
+    r'\begin{array}{%s}' % (5*'c',),
+    '&'.join(identity(i) for i in range(1,6)),
+    r'\end{array}.',
+    r'\end{equation*}',
+])
+\end{python}
+
+\begin{python}
+# Create a deliberate exception.
+print 'This text will be displayed.'
+print 1/0
+print 'This text won\'t be displayed.'
+\end{python}
+
+\end{document}
