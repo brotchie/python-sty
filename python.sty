@@ -38,6 +38,7 @@
 \RequirePackage{etoolbox}
 \RequirePackage{verbatim}
 \RequirePackage{color}
+\RequirePackage{ifplatform}
 
 \newwrite\@out
 \newwrite\@module
@@ -67,7 +68,11 @@
 \endgroup
 \immediate\closeout\@out
 \@writemodule
+\ifwindows
+\immediate\write18{type \@pythoninclude\space\@outname.py 2> nul: | python > \@outname.py.out 2> \@outname.py.err & call echo ^\@percentchar ERRORLEVEL^\@percentchar > \@outname.rc}
+\else
 \immediate\write18{cat \@pythoninclude\space\@outname.py | /usr/bin/env python > \@outname.py.out 2> \@outname.py.err; echo -n $? > \@outname.rc}
+\fi
 \immediate\input\@outname.py.out
 
 % Read the return code of the executed Python script.
