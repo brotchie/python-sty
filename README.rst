@@ -1,3 +1,7 @@
+**Note**: By default LaTeX and its variants disallowing calling of arbitrary shell commands. python.sty requires unrestricted
+to the shell in order to execute embedded Python scripts. When running python.sty you must execute ``latex`` or ``pdftex`` with
+either the ``-enable-write18`` or ``-shell-escape`` command line argument to enabled access to the Python executable.
+
 python.sty and associated scripts
 =================================
 
